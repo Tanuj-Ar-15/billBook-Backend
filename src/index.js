@@ -15,7 +15,6 @@ requireDir("controllers", { recurse: true })
 
 require("./config/mongoDb")
 
-
 router.use("/auth", authRoutes)
 
 
