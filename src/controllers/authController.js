@@ -6,6 +6,7 @@ const test = (req, res) => {
     const { email } = req.body
     try {
 
+console.log("email" , email);
 
         return res.status(200).json({
             success: true,
