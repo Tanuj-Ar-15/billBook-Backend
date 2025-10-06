@@ -3,7 +3,7 @@
 
 # Environment variables
 
-
+.env/
 # Logs
 *.log
 npm-debug.log*
