@@ -9,7 +9,7 @@ const router = Router()
 
 const port = process.env.PORT
 
-app.use("/api", router)
+app.use("/api/v1", router)
 
 requireDir("controllers", { recurse: true })
 
