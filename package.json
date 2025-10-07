@@ -27,6 +27,7 @@
     "express-fileupload": "^1.5.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.0",
+    "nodemailer": "^7.0.7",
     "os": "^0.1.2",
     "require-dir": "^1.2.0"
   }
