@@ -4,6 +4,8 @@ const generateOTP = require("../utils/generateOtp");
 const { generateToken } = require("../utils/Jwt");
 const sendOTP = require("../utils/sendOtp");
 const bcrypt = require("bcrypt")
+const crypto = require("crypto");
+const sendResetLink = require("../utils/sendLink");
 
 
 exports.login = async (req, res) => {
@@ -22,7 +24,6 @@ exports.login = async (req, res) => {
 
         const user = await User.findOne({ email })
 
-        console.log("email", email);
 
         if (!user) {
             return res.status(400).json({ success: false, message: 'User not found' });
@@ -46,7 +47,7 @@ exports.login = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: "Otp Sent Successfully!",
-            email: user.email   
+            email: user.email
         })
     } catch (error) {
         console.log("Error in auth Api: ", error);
@@ -182,4 +183,162 @@ exports.verifyLogin = async (req, res) => {
         })
     }
 
+}
+
+
+exports.forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    try {
+        if (!email) {
+            return res.status(400).json({
+                seccess: false,
+                message: "Email is Required"
+            })
+        }
+
+        const user = await User.findOne({ email })
+
+        if (!user) {
+            return res.status(400).json({
+                seccess: false,
+                message: "Invalid Email"
+            })
+        }
+
+
+
+        const token = crypto.randomBytes(32).toString("hex");
+
+        await sendResetLink(email , token)
+        user.resetTokenExpiry = new Date(Date.now() +  60 * 60 * 1000) 
+        user.resetToken = token
+        await user.save()
+
+        res.status(200).json({
+            success: true,
+            message: "Link sent successfully to your Email "
+        })
+
+    } catch (error) {
+        console.log("error", error);
+        return res.status(400).json({
+            success: false,
+            message: "Error in send link api",
+            error
+        })
+    }
+}
+
+
+
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const { password, token } = req.body;
+
+        if (!password || !token) {
+            return res.status(400).json({
+                success: false,
+                message: "Password and token are required.",
+            });
+        }
+
+
+        const user = await User.findOne({
+            resetToken: token,
+            resetTokenExpiry: { $gt: Date.now() },
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired password link.",
+            });
+        }
+
+        user.password = password;
+        user.resetToken = null;
+        user.resetTokenExpiry = null;
+        await user.save();
+
+
+        return res.status(200).json({
+            success: true,
+            message: "Your password has been reset successfully. You can now log in with your new password.",
+        });
+    } catch (error) {
+        console.error("[RESET] Error in resetPassword:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error while resetting password.",
+            error: error.message,
+        });
+    }
+};
+
+
+exports.logout = async (req, res) => {
+    try {
+
+
+        if (req.user) {
+            const user = await User.findById(req.user._id);
+            if (user) {
+                user.token = null;
+                await user.save();
+            }
+        }
+
+
+        res.clearCookie("userToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Logout successful!",
+        });
+    } catch (error) {
+        console.error("[LOGOUT] Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error during logout.",
+            error: error.message,
+        });
+    }
+};
+
+
+exports.readLoggedUser = async (req, res) => {
+    try {
+
+        const user = req.user
+
+        if (!user) {
+
+            return res.status(400).json({
+
+                success: false,
+                authenticated: false,
+                message: "You are not logged in."
+            })
+        }
+
+        res.status(200).json({
+            success: true,
+            authenticated: true,
+            message: "Read user success",
+            user
+        })
+
+    } catch (error) {
+        console.log("error in read logged user", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error during read user.",
+            error: error.message,
+        });
+    }
 }
