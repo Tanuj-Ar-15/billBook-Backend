@@ -7,7 +7,7 @@ const protect = async (req, res, next) => {
 
 
     if (req.cookies && req.cookies.restaurantToken) {
-      token = req.cookies.userToken;
+      token = req.cookies.restaurantToken;
     } else if (
       req.headers.authorization &&
       req.headers.authorization.startsWith("Bearer")

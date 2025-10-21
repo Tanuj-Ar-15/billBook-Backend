@@ -1,31 +1,38 @@
+const mongoose = require("mongoose");
 
-const mongoose = require('mongoose')
-
-
-
-const itemshcema = new mongoose.Schema({
-    restaurant_id:{
-        type : mongoose.Schema.type.objectId,
-        ref:"User"
-    },
-    sizeId:{
-        type:mongoose.Schema.types.objectId,
-        ref:"Size"
-    },
-    itemname:{
-        type:String,
-        require:true,
-    },
-    type:{
-        type:Boolean,
-        default:"veg"
-    },
-    price:[{}]
-
-
+const itemSchema = new mongoose.Schema({
+  restaurant_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Restaurant",
+    required: true
+  },
+  itemName: {
+    type: String,
+    required: true
+  },
+  veg: {
+    type: Boolean,
+    default: true
+  },
+  category_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Category",
+    required: true
+  },
+  price: [
+    {
+      size_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ItemSize",
+        required: true
+      },
+      price: {
+        type: Number,
+        required: true
+      }
+    }
+  ]
 });
 
-const Item = mongoose.model('Item',itemshcema);
-
-
-module.exports = Item ;
+const Item = mongoose.model("Item", itemSchema);
+module.exports = Item;

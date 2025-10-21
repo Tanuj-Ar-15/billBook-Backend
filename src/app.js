@@ -20,9 +20,11 @@ app.use(fileUpload());
 
 app.use((req, res, next) => {
     if (Object.keys(req.body || {}).length > 0) {
+        console.log("📍 Route:", `${req.method} ${req.originalUrl}`);
         console.log("📦 Request Body:", req.body);
     }
     next();
 });
+
 
 module.exports = { app };

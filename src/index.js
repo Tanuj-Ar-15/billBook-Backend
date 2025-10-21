@@ -4,6 +4,7 @@ const requireDir = require("require-dir")
 dotenv.config()
 const authRoutes = require("./routes/authRoutes")
 const { Router } = require("express")
+const itemRoutes = require("./routes/itemRoutes")
 
 const router = Router()
 
@@ -16,6 +17,9 @@ requireDir("controllers", { recurse: true })
 require("./config/mongoDb")
 
 router.use("/auth", authRoutes)
+
+router.use("/item", itemRoutes)
+
 
 
 
