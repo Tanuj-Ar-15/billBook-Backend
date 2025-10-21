@@ -18,6 +18,6 @@ router.post("/forget-password" , authController.forgotPassword)
 router.post("/reset-password" , authController.resetPassword)
 
 router.post("/logout" , authController.logout)
-router.get("/read/login/user" , protect , authController.readLoggedUser )
+router.get("/read/login/restaurant"  ,protect, authController.readLoggedUser )
 module.exports = router
 

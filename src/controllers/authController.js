@@ -1,4 +1,4 @@
-const User = require("../models/Users");
+const User = require("../models/Restaurant");
 const { cookieGenerate } = require("../utils/cookiesGenerate");
 const generateOTP = require("../utils/generateOtp");
 const { generateToken } = require("../utils/Jwt");
@@ -6,6 +6,7 @@ const sendOTP = require("../utils/sendOtp");
 const bcrypt = require("bcrypt")
 const crypto = require("crypto");
 const sendResetLink = require("../utils/sendLink");
+const Restaurant = require("../models/Restaurant");
 
 
 exports.login = async (req, res) => {
@@ -22,13 +23,13 @@ exports.login = async (req, res) => {
             })
         }
 
-        const user = await User.findOne({ email })
+        const restaurant = await Restaurant.findOne({ email })
 
 
-        if (!user) {
-            return res.status(400).json({ success: false, message: 'User not found' });
+        if (!restaurant) {
+            return res.status(400).json({ success: false, message: 'Restaurant not found' });
         }
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await bcrypt.compare(password, restaurant.password);
 
 
         if (!isMatch) {
@@ -37,17 +38,17 @@ exports.login = async (req, res) => {
         }
         const otp = generateOTP()
 
-        await sendOTP(user.email, otp)
+        await sendOTP(restaurant.email, otp)
 
-        user.otp = otp
-        user.otpExpiry = new Date(Date.now() + 15 * 60 * 1000);
+        restaurant.otp = otp
+        restaurant.otpExpiry = new Date(Date.now() + 15 * 60 * 1000);
 
 
-        await user.save();
+        await restaurant.save();
         return res.status(200).json({
             success: true,
             message: "Otp Sent Successfully!",
-            email: user.email
+            email: restaurant.email
         })
     } catch (error) {
         console.log("Error in auth Api: ", error);
@@ -65,10 +66,10 @@ exports.login = async (req, res) => {
 exports.register = async (req, res) => {
     try {
 
-        const { username, email, password } = req.body;
+        const { name, email, address, phone, password, GSTIN } = req.body;
 
 
-        if (!email || !password || !username) {
+        if (!email || !password || !name || !address || !phone) {
 
             return res.status(400).json({
                 success: false,
@@ -86,12 +87,12 @@ exports.register = async (req, res) => {
         }
 
 
-        const user = await User.create({ username, email, password })
+        const restaurant = await User.create({ name, email, password, address, phone, GSTIN })
 
         return res.status(201).json({
             success: true,
             message: "User created successfull!",
-            user
+            restaurant
         })
 
     } catch (error) {
@@ -111,17 +112,17 @@ exports.verifyLogin = async (req, res) => {
 
 
     try {
-        const user = await User.findOne({ email }).select('+otp +otpExpiry');
+        const restaurant = await Restaurant.findOne({ email }).select('+otp +otpExpiry');
 
-        if (!user) {
-            console.log(`[LOGIN] user not found: ${email}`);
+        if (!restaurant) {
+            console.log(`[LOGIN] restaurant not found: ${email}`);
             return res.status(400).json({
                 status: false,
-                message: 'User not found',
+                message: 'restaurant not found',
                 data: null
             });
         }
-        if (!user.otp || !user.otpExpiry) {
+        if (!restaurant.otp || !restaurant.otpExpiry) {
             console.log(`[LOGIN] No OTP found for user: ${email}`);
             return res.status(400).json({
                 status: false,
@@ -130,7 +131,7 @@ exports.verifyLogin = async (req, res) => {
             });
         }
 
-        if (user.otpExpiry < new Date()) {
+        if (restaurant.otpExpiry < new Date()) {
             console.log(`[LOGIN] OTP expired for user: ${email}`);
             return res.status(400).json({
                 status: false,
@@ -139,7 +140,7 @@ exports.verifyLogin = async (req, res) => {
             });
         }
 
-        const storedOTP = String(user.otp);
+        const storedOTP = String(restaurant.otp);
         console.log(`[LOGIN] Comparing OTPs - Stored: '${storedOTP}', Input: '${otp}'`);
         if (storedOTP !== otp) {
             console.log(`[LOGIN] OTP verification failed. Input OTP doesn't match stored OTP.`);
@@ -151,17 +152,17 @@ exports.verifyLogin = async (req, res) => {
         }
 
 
-        const token = generateToken(user._id);
-        user.token = token;
+        const token = generateToken(restaurant._id);
+        restaurant.token = token;
 
         // Clear OTP after successful verification
-        user.otp = undefined;
-        user.otpExpiry = undefined;
-        await user.save();
+        restaurant.otp = undefined;
+        restaurant.otpExpiry = undefined;
+        await restaurant.save();
 
         cookieGenerate(token, res)
 
-        const userWithoutSensitiveData = await User.findById(user._id).select('-password -token -otp -otpExpiry');
+        const restaurantWithoutSensitiveData = await User.findById(restaurant._id).select('-password -token -otp -otpExpiry');
 
 
         res.status(200).json({
@@ -169,7 +170,7 @@ exports.verifyLogin = async (req, res) => {
             message: 'Login successful',
             data: {
                 token,
-                user: userWithoutSensitiveData
+                retaurant: restaurantWithoutSensitiveData
             }
         });
 
@@ -196,9 +197,9 @@ exports.forgotPassword = async (req, res) => {
             })
         }
 
-        const user = await User.findOne({ email })
+        const restaurant = await Restaurant.findOne({ email })
 
-        if (!user) {
+        if (!restaurant) {
             return res.status(400).json({
                 seccess: false,
                 message: "Invalid Email"
@@ -209,10 +210,10 @@ exports.forgotPassword = async (req, res) => {
 
         const token = crypto.randomBytes(32).toString("hex");
 
-        await sendResetLink(email , token)
-        user.resetTokenExpiry = new Date(Date.now() +  60 * 60 * 1000) 
-        user.resetToken = token
-        await user.save()
+        await sendResetLink(email, token)
+        restaurant.resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000)
+        restaurant.resetToken = token
+        await restaurant.save()
 
         res.status(200).json({
             success: true,
@@ -244,22 +245,22 @@ exports.resetPassword = async (req, res) => {
         }
 
 
-        const user = await User.findOne({
+        const restaurant = await Restaurant.findOne({
             resetToken: token,
             resetTokenExpiry: { $gt: Date.now() },
         });
 
-        if (!user) {
+        if (!restaurant) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid or expired password link.",
             });
         }
 
-        user.password = password;
-        user.resetToken = null;
-        user.resetTokenExpiry = null;
-        await user.save();
+        restaurant.password = password;
+        restaurant.resetToken = null;
+        restaurant.resetTokenExpiry = null;
+        await restaurant.save();
 
 
         return res.status(200).json({
@@ -281,16 +282,16 @@ exports.logout = async (req, res) => {
     try {
 
 
-        if (req.user) {
-            const user = await User.findById(req.user._id);
-            if (user) {
-                user.token = null;
-                await user.save();
+        if (req.restaurant) {
+            const restaurant = await Restaurant.findById(req.user._id);
+            if (restaurant) {
+                restaurant.token = null;
+                await restaurant.save();
             }
         }
 
 
-        res.clearCookie("userToken", {
+        res.clearCookie("restaurantToken", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
@@ -314,9 +315,9 @@ exports.logout = async (req, res) => {
 exports.readLoggedUser = async (req, res) => {
     try {
 
-        const user = req.user
+        const restaurant = req.restaurant
 
-        if (!user) {
+        if (!restaurant) {
 
             return res.status(400).json({
 
@@ -329,8 +330,8 @@ exports.readLoggedUser = async (req, res) => {
         res.status(200).json({
             success: true,
             authenticated: true,
-            message: "Read user success",
-            user
+            message: "Read restaurant success",
+            restaurant
         })
 
     } catch (error) {

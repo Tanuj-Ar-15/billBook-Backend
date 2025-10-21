@@ -1,12 +1,12 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/Users");
+const Restaurant = require("../models/Restaurant");
 
 const protect = async (req, res, next) => {
   try {
     let token;
 
 
-    if (req.cookies && req.cookies.userToken) {
+    if (req.cookies && req.cookies.restaurantToken) {
       token = req.cookies.userToken;
     } else if (
       req.headers.authorization &&
@@ -30,15 +30,15 @@ const protect = async (req, res, next) => {
       });
     }
 
-    const user = await User.findById(decoded.userId).select("-password -otp -otpExpiry -token");
-    if (!user) {
+    const restaurant = await Restaurant.findById(decoded.userId).select("-password -otp -otpExpiry -token");
+    if (!restaurant) {
       return res.status(404).json({
         success: false,
-        message: "User not found.",
+        message: "Restaurant not found.",
       });
     }
 
-    req.user = user;
+    req.restaurant = restaurant;
 
     next();
   } catch (error) {
