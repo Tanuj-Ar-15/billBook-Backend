@@ -10,7 +10,11 @@ const itemSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  veg: {
+  description: {
+    type: String,
+    required: false
+  },
+  isVeg: {
     type: Boolean,
     default: true
   },

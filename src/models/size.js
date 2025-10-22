@@ -12,7 +12,7 @@ const sizeSchema = new mongoose.Schema(
        },
     }
   )
-  const itemSize = mongoose.model("itemSize", sizeSchema)
+  const itemSize = mongoose.model("ItemSize", sizeSchema)
      
   module.exports = itemSize;
      
