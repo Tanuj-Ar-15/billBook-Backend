@@ -17,17 +17,16 @@ requireDir("controllers", { recurse: true });
 const router = Router();
 const port = process.env.PORT || 5000;
 
-// ✅ Mount main API router
+
 app.use("/api/v1", router);
 
-// ✅ Define your routes
+
 router.use("/auth", authRoutes);
 router.use("/item", itemRoutes);
 
-// ✅ Initialize Swagger
+
 require("./lib/swagger")(app);
 
-// ✅ Start the server
 app.listen(port, () => {
   console.log(
     `🚀 Server is running on port ${port} | Environment: ${process.env.ENVIRONMENT}`

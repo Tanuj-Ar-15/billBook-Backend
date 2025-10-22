@@ -27,7 +27,7 @@ module.exports = (app) => {
       },
       security: [{ bearerAuth: [] }],
     },
-    // Use path.resolve to avoid relative path issues
+ 
     apis: [path.join(__dirname, "../routes/*.js")],
   };
 
